@@ -31,9 +31,15 @@ public class UserRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    public int getTotalCount() {
+        final String sql = "SELECT COUNT(*) FROM %s".formatted(User.TABLE_NAME);
+        return jdbcTemplate.queryForObject(sql, Integer.class);
+    }
+
     public List<User> listUsers(int page, int size) {
-        final String sql = "SELECT * FROM %s".formatted(User.TABLE_NAME);
-        final List<User> users = jdbcTemplate.query(sql, new RowMapper<User>() {
+        final int offset = (page - 1) * size;
+        final String sql = "SELECT * FROM %s LIMIT ? OFFSET ?".formatted(User.TABLE_NAME);
+        return jdbcTemplate.query(sql, new Object[]{size, offset}, new RowMapper<User>() {
             @Override
             public User mapRow(ResultSet rs, int rowNum) throws SQLException {
                 final User.Role role = User.Role.fromString(rs.getString("role"));
@@ -53,8 +59,8 @@ public class UserRepository {
                         deletedAt == null ? null : deletedAt.toInstant().atOffset(ZoneOffset.UTC)); //
             }
         });
-        return users;
     }
+
 
     public long saveSeller(final User user) {
         final KeyHolder keyHolder = new GeneratedKeyHolder();

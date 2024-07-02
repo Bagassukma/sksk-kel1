@@ -20,10 +20,11 @@ public class UserController {
     }
 
     @GetMapping("/list")
-    public Response<Object> listUser(@RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(value = "size", defaultValue = "10") int size) {
+    public Response<Object> listUser(@RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(value = "size", defaultValue = "2") int size) {
         Authentication authentication = SecurityContextHolder.getAuthentication();
         return userService.listUsers(authentication, page, size);
     }
+
 
     @PostMapping("/register-seller")
     public Response<Object> registerSeller(@RequestBody RegisterSellerReq req) {
