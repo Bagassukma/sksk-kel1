@@ -39,11 +39,12 @@ public final class UserService extends AbstractService {
             if (page <= 0 || size <= 0) {
                 return Response.badRequest();
             }
-            final List<UserDto> users = userRepository.listUsers(page, size) //
+            final List<UserDto> users = userRepository.listUsers(page, size)
                     .stream().map(user -> new UserDto(user.name())).toList();
             return Response.create("09", "00", "Sukses", users);
         });
     }
+
 
     public Response<Object> registerSeller(final Authentication authentication, final RegisterSellerReq req) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
