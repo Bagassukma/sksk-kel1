@@ -127,7 +127,7 @@ public final class UserService extends AbstractService {
 
     public Response<Object> deleteUser(final Authentication authentication, final DeleteUserReq req) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
-            if (req == null || req.name() == null || req.name().isEmpty()) {
+            if (req == null) {
                 return Response.badRequest();
             }
             boolean deleted = userRepository.deleteUser(req.name());
