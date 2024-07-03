@@ -2,17 +2,16 @@ package jawa.sinaukoding.sk.service;
 
 import jawa.sinaukoding.sk.entity.User;
 import jawa.sinaukoding.sk.model.Authentication;
-import jawa.sinaukoding.sk.model.request.DeleteUserReq;
-import jawa.sinaukoding.sk.model.request.LoginReq;
-import jawa.sinaukoding.sk.model.request.RegisterBuyerReq;
+import jawa.sinaukoding.sk.model.request.*;
 import jawa.sinaukoding.sk.model.Response;
-import jawa.sinaukoding.sk.model.request.RegisterSellerReq;
 import jawa.sinaukoding.sk.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -36,6 +35,7 @@ class UserServiceTest {
             OffsetDateTime.now(), //
             null, //
             null); //
+    private static final Logger log = LoggerFactory.getLogger(UserServiceTest.class);
 
     @MockBean
     private UserRepository userRepository;
@@ -131,6 +131,7 @@ class UserServiceTest {
         final User admin = userRepository.findById(1L).orElseThrow();
         final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
         final Response<Object> response = userService.registerBuyer(authentication, req);
+
         Assertions.assertNotNull(response);
         Assertions.assertEquals("0601", response.code());
         Assertions.assertEquals("Gagal mendaftarkan buyer", response.message());

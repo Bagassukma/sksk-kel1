@@ -34,6 +34,18 @@ public record User(Long id, //
         }
     }
 
+    public PreparedStatement update(final Connection connection) {
+        try {
+            final String sql = "UPDATE " + TABLE_NAME + " SET password=? WHERE name=";
+            final PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, name);
+            ps.setString(2, password);
+            return ps;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public enum Role {
         ADMIN, BUYER, SELLER, UNKNOWN;
 

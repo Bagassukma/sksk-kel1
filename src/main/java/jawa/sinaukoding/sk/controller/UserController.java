@@ -26,7 +26,6 @@ public class UserController {
         return userService.listUsers(authentication, page, size);
     }
 
-
     @PostMapping("/register-seller")
     public Response<Object> registerSeller(@RequestBody RegisterSellerReq req) {
         Authentication authentication = SecurityContextHolder.getAuthentication();
@@ -39,7 +38,7 @@ public class UserController {
         return userService.registerBuyer(authentication, req);
     }
 
-    @PostMapping("/reset-password")
+    @PutMapping("/reset-password")
     public Response<Object> resetPassword(@RequestBody ResetPasswordReq req) {
         Authentication authentication = SecurityContextHolder.getAuthentication();
         return userService.resetPassword(authentication, req);

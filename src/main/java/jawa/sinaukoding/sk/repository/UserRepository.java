@@ -109,12 +109,12 @@ public class UserRepository {
         }));
     }
 
-    public long updatePasswordByName(final String name, final String newPassword) {
+    public long updatePasswordByEmail(final String email, final String newPassword) {
         try {
             return jdbcTemplate.update(con -> {
-                final PreparedStatement ps = con.prepareStatement("UPDATE " + User.TABLE_NAME + " SET password=? WHERE name=?");
+                final PreparedStatement ps = con.prepareStatement("UPDATE " + User.TABLE_NAME + " SET password=? WHERE email=?");
                 ps.setString(1, newPassword);
-                ps.setString(2, name);
+                ps.setString(2, email);
                 return ps;
             }) > 0 ? 1L : 0L;
         } catch (Exception e) {
@@ -122,7 +122,6 @@ public class UserRepository {
             return 0L;
         }
     }
-
 
     public Optional<User> findById(final Long id) {
         if (id == null || id < 0) {
