@@ -138,21 +138,27 @@ public final class UserService extends AbstractService {
 
     public Response<Object> resetPassword(final Authentication authentication, final ResetPasswordReq req) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
-            if (req == null || req.getName() == null || req.getNewPassword() == null) {
+            if (req == null) {
                 return Response.badRequest();
             }
+            if (req.email() == null || req.email().isEmpty()) {
+                return Response.create("07", "03", "Email tidak boleh null", null);
+            }
+            if (req.newPassword() == null || req.newPassword().isEmpty()) {
+                return Response.create("07", "04", "Password tidak boleh null", null);
+            }
 
-            final Optional<User> userOpt = userRepository.findByName(req.getName());
+            final Optional<User> userOpt = userRepository.findByEmail(req.email());
+
             if (userOpt.isEmpty()) {
                 return Response.create("07", "02", "User tidak ditemukan", null);
             }
 
-            final User user = userOpt.get();
-            final String encodedPassword = passwordEncoder.encode(req.getNewPassword());
-            final long result = userRepository.updatePasswordByName(req.getName(), encodedPassword);
+            final String encodedPassword = passwordEncoder.encode(req.newPassword());
+            final long result = userRepository.updatePasswordByEmail(req.email(), encodedPassword);
 
             if (result == 0L) {
-                return Response.create("07", "01", "Gagal mereset password", null);
+                return Response.create("07", "01", "Gagal reset password", null);
             }
 
             return Response.create("07", "00", "Sukses", result);

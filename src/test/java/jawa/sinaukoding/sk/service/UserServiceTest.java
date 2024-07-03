@@ -2,17 +2,16 @@ package jawa.sinaukoding.sk.service;
 
 import jawa.sinaukoding.sk.entity.User;
 import jawa.sinaukoding.sk.model.Authentication;
-import jawa.sinaukoding.sk.model.request.DeleteUserReq;
-import jawa.sinaukoding.sk.model.request.LoginReq;
-import jawa.sinaukoding.sk.model.request.RegisterBuyerReq;
+import jawa.sinaukoding.sk.model.request.*;
 import jawa.sinaukoding.sk.model.Response;
-import jawa.sinaukoding.sk.model.request.RegisterSellerReq;
 import jawa.sinaukoding.sk.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -36,6 +35,7 @@ class UserServiceTest {
             OffsetDateTime.now(), //
             null, //
             null); //
+    private static final Logger log = LoggerFactory.getLogger(UserServiceTest.class);
 
     @MockBean
     private UserRepository userRepository;
@@ -131,6 +131,7 @@ class UserServiceTest {
         final User admin = userRepository.findById(1L).orElseThrow();
         final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
         final Response<Object> response = userService.registerBuyer(authentication, req);
+
         Assertions.assertNotNull(response);
         Assertions.assertEquals("0601", response.code());
         Assertions.assertEquals("Gagal mendaftarkan buyer", response.message());
@@ -245,6 +246,141 @@ class UserServiceTest {
         final User admin = userRepository.findById(1L).orElseThrow();
         final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
         final Response<Object> response = userService.deleteUser(authentication, null);
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0301", response.code());
+        Assertions.assertEquals("bad request", response.message());
+        Assertions.assertNull(response.data());
+    }
+
+    @Test
+    void resetPassword() {
+        final ResetPasswordReq req = new ResetPasswordReq("arbi@sksk.id", "cekpass");
+        User mockUser = new User(
+                1L,
+                "Arbi",
+                "arbi@sksk.id",
+                "oldpassword",
+                User.Role.BUYER,
+                ADMIN.id(),
+                null,
+                null,
+                OffsetDateTime.now(),
+                null,
+                null
+        );
+        Mockito.when(userRepository.findByEmail(req.email())).thenReturn(Optional.of(mockUser));
+        Mockito.when(userRepository.updatePasswordByEmail(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(2L);
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.resetPassword(authentication, req);
+
+        log.info(String.valueOf(response));
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0700", response.code());
+        Assertions.assertEquals("Sukses", response.message());
+        Assertions.assertEquals(2L, response.data());
+    }
+
+    @Test
+    void resetPasswordFailed() {
+        final ResetPasswordReq req = new ResetPasswordReq("arbi@sksk.id", "cekpass");
+        User mockUser = new User(
+                1L,
+                "Arbi",
+                "arbi@sksk.id",
+                "oldpassword",
+                User.Role.BUYER,
+                ADMIN.id(),
+                null,
+                null,
+                OffsetDateTime.now(),
+                null,
+                null
+        );
+        Mockito.when(userRepository.findByEmail(req.email())).thenReturn(Optional.of(mockUser));
+        Mockito.when(userRepository.updatePasswordByEmail(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(0L);
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.resetPassword(authentication, req);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0701", response.code());
+        Assertions.assertEquals("Gagal reset password", response.message());
+        Assertions.assertNull(response.data());
+    }
+
+    @Test
+    void resetPasswordUserNotFound() {
+        final ResetPasswordReq req = new ResetPasswordReq("arbi@sksk.id", "cekpass");
+        Mockito.when(userRepository.findByEmail(req.email())).thenReturn(Optional.empty());
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.resetPassword(authentication, req);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0702", response.code());
+        Assertions.assertEquals("User tidak ditemukan", response.message());
+        Assertions.assertNull(response.data());
+    }
+
+    @Test
+    void resetPasswordEmailNull() {
+        final ResetPasswordReq req = new ResetPasswordReq(null, "cekpass");
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.resetPassword(authentication, req);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0703", response.code());
+        Assertions.assertEquals("Email tidak boleh null", response.message());
+        Assertions.assertNull(response.data());
+    }
+
+    @Test
+    void resetPasswordEmailEmpty() {
+        final ResetPasswordReq req = new ResetPasswordReq("", "cekpass");
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.resetPassword(authentication, req);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0703", response.code());
+        Assertions.assertEquals("Email tidak boleh null", response.message());
+        Assertions.assertNull(response.data());
+    }
+
+    @Test
+    void resetPasswordPasswordNull() {
+        final ResetPasswordReq req = new ResetPasswordReq("arbi@sksk.id", null);
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.resetPassword(authentication, req);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0704", response.code());
+        Assertions.assertEquals("Password tidak boleh null", response.message());
+        Assertions.assertNull(response.data());
+    }
+
+    @Test
+    void resetPasswordPasswordEmpty() {
+        final ResetPasswordReq req = new ResetPasswordReq("arbi@sksk.id", "");
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.resetPassword(authentication, req);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0704", response.code());
+        Assertions.assertEquals("Password tidak boleh null", response.message());
+        Assertions.assertNull(response.data());
+    }
+
+    @Test
+    void resetPasswordBadRequest() {
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.resetPassword(authentication, null);
+
         Assertions.assertNotNull(response);
         Assertions.assertEquals("0301", response.code());
         Assertions.assertEquals("bad request", response.message());
