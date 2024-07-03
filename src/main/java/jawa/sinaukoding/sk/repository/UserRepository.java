@@ -1,7 +1,6 @@
 package jawa.sinaukoding.sk.repository;
 
 import jawa.sinaukoding.sk.entity.User;
-import jawa.sinaukoding.sk.model.request.DeleteUserReq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -84,18 +83,46 @@ public class UserRepository {
         }
     }
 
-    public long updatePassword(Long userId, String newPassword) {
-        if (jdbcTemplate.update(con -> {
-            final PreparedStatement ps = con.prepareStatement("UPDATE " + User.TABLE_NAME + " SET password=? WHERE id=?");
-            ps.setString(1, newPassword);
-            ps.setLong(2, userId);
+    public Optional<User> findByName(final String name) {
+        if (name == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(jdbcTemplate.query(con -> {
+            final PreparedStatement ps = con.prepareStatement("SELECT * FROM " + User.TABLE_NAME + " WHERE name=?");
+            ps.setString(1, name);
             return ps;
-        }) > 0) {
-            return userId;
-        } else {
+        }, rs -> {
+            if (!rs.next()) {
+                return null;
+            }
+            final Long id = rs.getLong("id");
+            final String email = rs.getString("email");
+            final String password = rs.getString("password");
+            final User.Role role = User.Role.valueOf(rs.getString("role"));
+            final Long createdBy = rs.getLong("created_by");
+            final Long updatedBy = rs.getLong("updated_by");
+            final Long deletedBy = rs.getLong("deleted_by");
+            final OffsetDateTime createdAt = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC);
+            final OffsetDateTime updatedAt = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
+            final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
+            return new User(id, name, email, password, role, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
+        }));
+    }
+
+    public long updatePasswordByName(final String name, final String newPassword) {
+        try {
+            return jdbcTemplate.update(con -> {
+                final PreparedStatement ps = con.prepareStatement("UPDATE " + User.TABLE_NAME + " SET password=? WHERE name=?");
+                ps.setString(1, newPassword);
+                ps.setString(2, name);
+                return ps;
+            }) > 0 ? 1L : 0L;
+        } catch (Exception e) {
+            log.error("Error updating password: {}", e.getMessage());
             return 0L;
         }
     }
+
 
     public Optional<User> findById(final Long id) {
         if (id == null || id < 0) {

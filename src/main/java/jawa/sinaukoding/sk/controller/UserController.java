@@ -5,6 +5,7 @@ import jawa.sinaukoding.sk.model.Response;
 import jawa.sinaukoding.sk.model.request.DeleteUserReq;
 import jawa.sinaukoding.sk.model.request.RegisterBuyerReq;
 import jawa.sinaukoding.sk.model.request.RegisterSellerReq;
+import jawa.sinaukoding.sk.model.request.ResetPasswordReq;
 import jawa.sinaukoding.sk.service.UserService;
 import jawa.sinaukoding.sk.util.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -39,9 +40,9 @@ public class UserController {
     }
 
     @PostMapping("/reset-password")
-    public Response<Object> resetPassword() {
-        // TODO: reset password
-        return null;
+    public Response<Object> resetPassword(@RequestBody ResetPasswordReq req) {
+        Authentication authentication = SecurityContextHolder.getAuthentication();
+        return userService.resetPassword(authentication, req);
     }
 
     @PostMapping("/update-profile")
