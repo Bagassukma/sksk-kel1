@@ -2,6 +2,7 @@ package jawa.sinaukoding.sk.service;
 
 import jawa.sinaukoding.sk.entity.User;
 import jawa.sinaukoding.sk.model.Authentication;
+import jawa.sinaukoding.sk.model.request.DeleteUserReq;
 import jawa.sinaukoding.sk.model.request.LoginReq;
 import jawa.sinaukoding.sk.model.request.RegisterBuyerReq;
 import jawa.sinaukoding.sk.model.Response;
@@ -210,5 +211,19 @@ class UserServiceTest {
         Response<Object> response = userService.listUsers(authentication, 1, 10);
         Assertions.assertEquals("0900", response.code());
         Assertions.assertEquals("Sukses", response.message());
+    }
+
+    @Test
+    void deleteUser() {
+        DeleteUserReq req = new DeleteUserReq("Budi");
+        final User admin = userRepository.findById(1L).orElseThrow();
+        Mockito.when(userRepository.deleteUser("Budi")).thenReturn(true);
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        Response<Object> response = userService.deleteUser(authentication, req);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("1000",  response.code());
+        Assertions.assertEquals("User berhasil dihapus", response.message());
+        Assertions.assertEquals(true, response.data());
     }
 }
