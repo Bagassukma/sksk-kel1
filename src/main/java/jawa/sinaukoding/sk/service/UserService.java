@@ -2,10 +2,7 @@ package jawa.sinaukoding.sk.service;
 
 import jawa.sinaukoding.sk.entity.User;
 import jawa.sinaukoding.sk.model.Authentication;
-import jawa.sinaukoding.sk.model.request.DeleteUserReq;
-import jawa.sinaukoding.sk.model.request.LoginReq;
-import jawa.sinaukoding.sk.model.request.RegisterBuyerReq;
-import jawa.sinaukoding.sk.model.request.RegisterSellerReq;
+import jawa.sinaukoding.sk.model.request.*;
 import jawa.sinaukoding.sk.model.Response;
 import jawa.sinaukoding.sk.model.response.UserDto;
 import jawa.sinaukoding.sk.repository.UserRepository;
@@ -138,4 +135,28 @@ public final class UserService extends AbstractService {
             }
         });
     }
+
+    public Response<Object> resetPassword(final Authentication authentication, final ResetPasswordReq req) {
+        return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
+            if (req == null || req.getName() == null || req.getNewPassword() == null) {
+                return Response.badRequest();
+            }
+
+            final Optional<User> userOpt = userRepository.findByName(req.getName());
+            if (userOpt.isEmpty()) {
+                return Response.create("07", "02", "User tidak ditemukan", null);
+            }
+
+            final User user = userOpt.get();
+            final String encodedPassword = passwordEncoder.encode(req.getNewPassword());
+            final long result = userRepository.updatePasswordByName(req.getName(), encodedPassword);
+
+            if (result == 0L) {
+                return Response.create("07", "01", "Gagal mereset password", null);
+            }
+
+            return Response.create("07", "00", "Sukses", result);
+        });
+    }
+
 }
