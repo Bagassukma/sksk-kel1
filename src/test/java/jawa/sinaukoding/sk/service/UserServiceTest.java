@@ -76,7 +76,6 @@ class UserServiceTest {
         Assertions.assertEquals(2L, response.data());
     }
 
-
     @Test
     void registerSellerBadRequest() {
         final User admin = userRepository.findById(1L).orElseThrow();
@@ -215,7 +214,7 @@ class UserServiceTest {
 
     @Test
     void deleteUser() {
-        DeleteUserReq req = new DeleteUserReq("Budi");
+        final DeleteUserReq req = new DeleteUserReq("Budi");
         final User admin = userRepository.findById(1L).orElseThrow();
         Mockito.when(userRepository.deleteUser("Budi")).thenReturn(true);
         final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
@@ -225,5 +224,19 @@ class UserServiceTest {
         Assertions.assertEquals("1000",  response.code());
         Assertions.assertEquals("User berhasil dihapus", response.message());
         Assertions.assertEquals(true, response.data());
+    }
+
+    @Test
+    void deleteUserFailed() {
+        final DeleteUserReq req = new DeleteUserReq("Budi");
+        final User admin = userRepository.findById(1L).orElseThrow();
+        Mockito.when(userRepository.deleteUser("Budi")).thenReturn(false);
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.deleteUser(authentication, req);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("1001", response.code());
+        Assertions.assertEquals("Gagal menghapus user", response.message());
+        Assertions.assertEquals(false, response.data());
     }
 }
