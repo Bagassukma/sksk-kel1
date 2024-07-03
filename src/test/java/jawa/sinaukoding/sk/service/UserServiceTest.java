@@ -239,4 +239,15 @@ class UserServiceTest {
         Assertions.assertEquals("Gagal menghapus user", response.message());
         Assertions.assertEquals(false, response.data());
     }
+
+    @Test
+    void deleteUserBadRequest() {
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = userService.deleteUser(authentication, null);
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0301", response.code());
+        Assertions.assertEquals("bad request", response.message());
+        Assertions.assertNull(response.data());
+    }
 }
