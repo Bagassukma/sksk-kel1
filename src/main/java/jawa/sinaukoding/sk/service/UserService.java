@@ -141,10 +141,10 @@ public final class UserService extends AbstractService {
             if (req == null) {
                 return Response.badRequest();
             }
-            if (req.email() == null) {
+            if (req.email() == null || req.email().isEmpty()) {
                 return Response.create("07", "03", "Email tidak boleh null", null);
             }
-            if (req.newPassword() == null) {
+            if (req.newPassword() == null || req.newPassword().isEmpty()) {
                 return Response.create("07", "04", "Password tidak boleh null", null);
             }
 
