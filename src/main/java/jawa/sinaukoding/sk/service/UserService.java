@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -44,7 +43,6 @@ public final class UserService extends AbstractService {
             return Response.create("09", "00", "Sukses", users);
         });
     }
-
 
     public Response<Object> registerSeller(final Authentication authentication, final RegisterSellerReq req) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
@@ -134,9 +132,9 @@ public final class UserService extends AbstractService {
             }
             boolean deleted = userRepository.deleteUser(req.name());
             if (deleted) {
-                return Response.create("10", "00", "User berhasil dihapus", null);
+                return Response.create("10", "00", "User berhasil dihapus", true);
             } else {
-                return Response.create("10", "01", "Gagal menghapus user", null);
+                return Response.create("10", "01", "Gagal menghapus user", false);
             }
         });
     }

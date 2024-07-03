@@ -38,11 +38,11 @@ public class UserController {
         return userService.registerBuyer(authentication, req);
     }
 
-//    @PostMapping("/reset-password")
-//    public Response<Object> resetPassword() {
-//        // TODO: reset password
-//        return null;
-//    }
+    @PostMapping("/reset-password")
+    public Response<Object> resetPassword() {
+        // TODO: reset password
+        return null;
+    }
 
     @PostMapping("/update-profile")
     public Response<Object> updateProfile() {

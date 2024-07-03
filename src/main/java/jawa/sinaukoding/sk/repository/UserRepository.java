@@ -31,11 +31,6 @@ public class UserRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public int getTotalCount() {
-        final String sql = "SELECT COUNT(*) FROM %s".formatted(User.TABLE_NAME);
-        return jdbcTemplate.queryForObject(sql, Integer.class);
-    }
-
     public List<User> listUsers(int page, int size) {
         final int offset = (page - 1) * size;
         final String sql = "SELECT * FROM %s LIMIT ? OFFSET ?".formatted(User.TABLE_NAME);
@@ -60,7 +55,6 @@ public class UserRepository {
             }
         });
     }
-
 
     public long saveSeller(final User user) {
         final KeyHolder keyHolder = new GeneratedKeyHolder();
