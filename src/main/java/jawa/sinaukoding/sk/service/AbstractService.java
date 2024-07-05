@@ -8,23 +8,19 @@ import java.util.Optional;
 
 abstract class AbstractService {
 
-    Optional<Response<Object>> precondition(final Authentication authentication, User.Role role) {
+    Optional<Response<Object>> precondition(final Authentication authentication, User.Role... role) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return Optional.of(Response.unauthenticated());
         }
-        if (authentication.id() == null || authentication.id() < 0 || role != authentication.role()) {
+        if (authentication.id() == null || authentication.id() < 0) {
             return Optional.of(Response.unauthorized());
         }
-        return Optional.empty();
+        for (User.Role r : role) {
+            if (r == authentication.role()) {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(Response.unauthorized());
     }
 
-    Optional<Response<Object>> precondition(final Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return Optional.of(Response.unauthenticated());
-        }
-        if (authentication.id() == null || authentication.id() < 0 || authentication.role() == null) {
-            return Optional.of(Response.unauthorized());
-        }
-        return Optional.empty();
-    }
 }

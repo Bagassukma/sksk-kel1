@@ -71,8 +71,6 @@ public final class Base64Utils {
       BASE64URL_IALPHABET['='] = 0;
     }
 
-    static final Base64 DEFAULT = new Base64(false);
-    static final Base64 URL_SAFE = new Base64(true);
 
     private final boolean urlsafe;
     private final char[] ALPHABET;

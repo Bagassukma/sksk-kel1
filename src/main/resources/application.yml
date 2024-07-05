@@ -2,7 +2,7 @@ spring:
   application:
     name: sk
   datasource:
-    url: jdbc:sqlite:/home/unknown/Documents/sk/tools/db/data/sk.db
+    url: jdbc:sqlite:./tools/db/data/sk.db
     username: admin
     password: admin
     driverClassName: org.sqlite.JDBC

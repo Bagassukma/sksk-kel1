@@ -7,11 +7,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 public final class JwtUtils {
 
+    @SuppressWarnings("null")
     public static Jwt hs256Parse(String jwt, byte[] bytesKey) {
         if (jwt == null) {
             throw new IllegalArgumentException("JWT token must be not null.");
@@ -181,7 +183,8 @@ public final class JwtUtils {
             super("", "{", "}", ":", ",", true);
         }
 
-        public Payload add(String name, Object value) {
+        @Override
+        public Payload add (String name, Object value) {
             super.add(name, value);
             return this;
         }

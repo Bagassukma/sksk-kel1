@@ -41,9 +41,6 @@ public final class HexUtils {
     HEX2B['f'] = (byte) 15;
   }
 
-  HexUtils() {
-    throw new IllegalStateException("Utility class");
-  }
 
   public static String bytesToHex(byte[] bytes) {
     final int fromIndex = 0;

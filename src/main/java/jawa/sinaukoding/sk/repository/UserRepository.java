@@ -1,120 +1,159 @@
 package jawa.sinaukoding.sk.repository;
 
-import jawa.sinaukoding.sk.entity.User;
-import jawa.sinaukoding.sk.model.Authentication;
-import jawa.sinaukoding.sk.model.request.RegisterBuyerReq;
-import jawa.sinaukoding.sk.model.request.RegisterSellerReq;
-import org.springframework.jdbc.core.*;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Repository;
-
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
+
+import jawa.sinaukoding.sk.entity.User;
+
 @Repository
 public class UserRepository {
 
+    private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
+
     private final JdbcTemplate jdbcTemplate;
-    private final SimpleJdbcInsert jdbcInsert;
 
     public UserRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
     }
 
-    public List<User> listUsers(final Authentication authentication, int page, int size) {
+    public List<User> listUsers(int page, int size) {
         final String sql = "SELECT * FROM %s".formatted(User.TABLE_NAME);
-        final List<User> users = jdbcTemplate.query(sql, new RowMapper<User>() {
-            @Override
-            public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-                final User.Role role = User.Role.fromString(rs.getString("role"));
-                final Timestamp createdAt = rs.getTimestamp("created_at");
-                final Timestamp updatedAt = rs.getTimestamp("updated_at");
-                final Timestamp deletedAt = rs.getTimestamp("deleted_at");
-                return new User(rs.getLong("id"), //
-                        rs.getString("name"), //
-                        rs.getString("email"), //
-                        rs.getString("password"), //
-                        role, //
-                        rs.getLong("created_by"), //
-                        rs.getLong("updated_by"), //
-                        rs.getLong("deleted_by"), //
-                        createdAt == null ? null : createdAt.toInstant().atOffset(ZoneOffset.UTC), //
-                        updatedAt == null ? null : updatedAt.toInstant().atOffset(ZoneOffset.UTC), //
-                        deletedAt == null ? null : deletedAt.toInstant().atOffset(ZoneOffset.UTC)); //
-            }
+        final List<User> users = jdbcTemplate.query(sql, (ResultSet rs, int rowNum) -> {
+            final User.Role role = User.Role.fromString(rs.getString("role"));
+            final Timestamp createdAt = rs.getTimestamp("created_at");
+            final Timestamp updatedAt = rs.getTimestamp("updated_at");
+            final Timestamp deletedAt = rs.getTimestamp("deleted_at");
+            return new User(rs.getLong("id"), //
+                    rs.getString("name"), //
+                    rs.getString("email"), //
+                    rs.getString("password"), //
+                    role, //
+                    rs.getLong("created_by"), //
+                    rs.getLong("updated_by"), //
+                    rs.getLong("deleted_by"), //
+                    createdAt == null ? null : createdAt.toInstant().atOffset(ZoneOffset.UTC), //
+                    updatedAt == null ? null : updatedAt.toInstant().atOffset(ZoneOffset.UTC), //
+                    deletedAt == null ? null : deletedAt.toInstant().atOffset(ZoneOffset.UTC)); //
         });
         return users;
     }
 
-    public Long saveSeller(final Authentication authentication, final RegisterSellerReq req, String encodedPassword) {
+    public long saveSeller(final User user) {
         final KeyHolder keyHolder = new GeneratedKeyHolder();
-        final User user = new User( //
-                null, //
-                req.name(), //
-                req.email(), //
-                encodedPassword, //
-                User.Role.SELLER, //
-                authentication.id(), //
-                null, //
-                null, //
-                OffsetDateTime.now(), //
-                null, //
-                null //
-        );
         try {
             if (jdbcTemplate.update(con -> Objects.requireNonNull(user.insert(con)), keyHolder) != 1) {
                 return 0L;
             } else {
                 return Objects.requireNonNull(keyHolder.getKey()).longValue();
             }
-        } catch (Exception e) {
+        } catch (DataAccessException e) {
+            log.error("{}", e.getMessage());
             return 0L;
         }
     }
 
-    public Long saveBuyer(final Authentication authentication, final RegisterBuyerReq req, String encodedPassword) {
+    public long saveBuyer(final User user) {
         final KeyHolder keyHolder = new GeneratedKeyHolder();
-        final User user = new User( //
-                null, //
-                req.name(), //
-                req.email(), //
-                encodedPassword, //
-                User.Role.BUYER, //
-                authentication.id(), //
-                null, //
-                null, //
-                OffsetDateTime.now(), //
-                null, //
-                null //
-        );
         try {
             if (jdbcTemplate.update(con -> Objects.requireNonNull(user.insert(con)), keyHolder) != 1) {
                 return 0L;
             } else {
                 return Objects.requireNonNull(keyHolder.getKey()).longValue();
             }
-        } catch (Exception e) {
+        } catch (DataAccessException e) {
+            log.error("{}", e.getMessage());
             return 0L;
         }
     }
 
-    public Long updatePassword(final Authentication authentication, String newPassword) {
-        if (jdbcTemplate.update(con -> {
-            final PreparedStatement ps = con.prepareStatement("UPDATE sys_user SET password=?");
-            ps.setString(1, newPassword);
+        public Optional<User> findByName(final String name) {
+        if (name == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(jdbcTemplate.query(con -> {
+            final PreparedStatement ps = con.prepareStatement("SELECT * FROM " + User.TABLE_NAME + " WHERE name=?");
+            ps.setString(1, name);
             return ps;
-        }) > 0) {
-            return authentication.id();
-        } else {
+        }, rs -> {
+            if (!rs.next()) {
+                return null;
+            }
+            final Long id = rs.getLong("id");
+            final String email = rs.getString("email");
+            final String password = rs.getString("password");
+            final User.Role role = User.Role.valueOf(rs.getString("role"));
+            final Long createdBy = rs.getLong("created_by");
+            final Long updatedBy = rs.getLong("updated_by");
+            final Long deletedBy = rs.getLong("deleted_by");
+            final OffsetDateTime createdAt = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC);
+            final OffsetDateTime updatedAt = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
+            final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
+            return new User(id, name, email, password, role, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
+        }));
+    }
+
+    public long updateProfile(User user) {
+        String idStr = Long.toString(user.id());
+        ArrayList<String> listValue = new ArrayList<>();
+
+        if (user.id() == 0) {
             return 0L;
         }
+        
+        StringBuilder qry = new StringBuilder();
+        qry.append(" UPDATE " + User.TABLE_NAME + " SET ");
+
+        if (user.name() != "") {
+            qry.append( "name=?");
+            listValue.add(user.name());
+        }
+
+        if (user.email() != ""){
+            if(listValue.size() >= 1){
+                qry.append( ", email=?");
+            }else{
+                qry.append( "email=?");
+            }
+            listValue.add(user.email());
+        }
+
+        if(listValue.size() == 0){
+            return 0L;
+        }
+
+        qry.append( ",updated_by=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
+        listValue.add(idStr);
+        listValue.add(idStr);
+
+        if(jdbcTemplate.update(con -> {
+            final PreparedStatement ps = con.prepareStatement(qry.toString());
+
+            for(int x=0; x<listValue.size(); x++){
+                ps.setString(x+1, listValue.get(x));
+            }
+
+            return ps;
+        }) > 0){
+            return user.id();
+        }else{
+            return 0L;
+        }
+        
     }
 
     public Optional<User> findById(final Long id) {
@@ -122,10 +161,13 @@ public class UserRepository {
             return Optional.empty();
         }
         return Optional.ofNullable(jdbcTemplate.query(con -> {
-            final PreparedStatement ps = con.prepareStatement("SELECT * FROM sys_user WHERE id=?");
+            final PreparedStatement ps = con.prepareStatement("SELECT * FROM " + User.TABLE_NAME + " WHERE id=?");
             ps.setLong(1, id);
             return ps;
         }, rs -> {
+            if (rs.getLong("id") <= 0) {
+                return null;
+            }
             final String name = rs.getString("name");
             final String email = rs.getString("email");
             final String password = rs.getString("password");
@@ -145,11 +187,14 @@ public class UserRepository {
             return Optional.empty();
         }
         return Optional.ofNullable(jdbcTemplate.query(con -> {
-            final PreparedStatement ps = con.prepareStatement("SELECT * FROM sys_user WHERE email=?");
+            final PreparedStatement ps = con.prepareStatement("SELECT * FROM " + User.TABLE_NAME + " WHERE email=?");
             ps.setString(1, email);
             return ps;
         }, rs -> {
             final Long id = rs.getLong("id");
+            if (id <= 0) {
+                return null;
+            }
             final String name = rs.getString("name");
             final String password = rs.getString("password");
             final User.Role role = User.Role.valueOf(rs.getString("role"));

@@ -1,6 +1,7 @@
 package jawa.sinaukoding.sk.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,10 +9,13 @@ import jawa.sinaukoding.sk.entity.User;
 import jawa.sinaukoding.sk.model.Authentication;
 import jawa.sinaukoding.sk.util.JwtUtils;
 import jawa.sinaukoding.sk.util.SecurityContextHolder;
+
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class AuthenticationFilter extends OncePerRequestFilter {
 
@@ -40,7 +44,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                     final Authentication authentication = new Authentication(id.longValue(), role, true);
                     SecurityContextHolder.setAuthentication(authentication);
                 }
-            } catch (Exception e) {
+            } catch (JsonProcessingException e) {
                 SecurityContextHolder.clear();
             }
         }
