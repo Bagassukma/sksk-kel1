@@ -84,4 +84,15 @@ public class AuctionRepository {
         ));
     }
 
+    public long updateAuctionStatus(Auction auction) {
+        String sql = "UPDATE %s SET status = ? WHERE id = ?".formatted(Auction.TABLE_NAME);
+        try {
+            return jdbcTemplate.update(sql, auction.status().toString(), auction.id());
+        } catch (Exception e) {
+            log.error("Failed to update auction status: {}", e.getMessage());
+            return 0L;
+        }
+    }
+
+
 }

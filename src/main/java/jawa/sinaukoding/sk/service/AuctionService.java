@@ -5,6 +5,7 @@ import jawa.sinaukoding.sk.entity.User;
 import jawa.sinaukoding.sk.model.Authentication;
 import jawa.sinaukoding.sk.model.request.SellerCreateAuctionReq;
 import jawa.sinaukoding.sk.model.Response;
+import jawa.sinaukoding.sk.model.request.UpdateStatusReq;
 import jawa.sinaukoding.sk.model.response.AuctionDto;
 import jawa.sinaukoding.sk.repository.AuctionRepository;
 import org.springframework.core.env.Environment;
@@ -98,6 +99,54 @@ public final class AuctionService extends AbstractService {
                             auctionList.status().toString())).toList();
 
             return Response.create("09", "00", "Sukses", dto);
+        });
+    }
+
+    public Response<Object> updateAuctionStatus(Authentication authentication, UpdateStatusReq req) {
+        return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
+            Auction.Status newStatus = req.status();
+            // Check if the new status is valid for update
+            if (newStatus != Auction.Status.APPROVED && newStatus != Auction.Status.REJECTED) {
+                return Response.badRequest();
+            }
+
+            // Fetch the auction by ID
+            List<Auction> auctions = auctionRepository.findById(req.id());
+            if (auctions.isEmpty()) {
+                return Response.create("07", "02", "Auction tidak ditemukan", null);
+            }
+
+            // Update the status of the auction
+            Auction auction = auctions.get(0);
+
+            // Create a new Auction object with updated status
+            Auction updatedAuction = new Auction(
+                    auction.id(),
+                    auction.code(),
+                    auction.name(),
+                    auction.description(),
+                    auction.offer(),
+                    auction.highestBid(),
+                    auction.highestBidderId(),
+                    auction.highestBidderName(),
+                    newStatus, // Update the status here
+                    auction.startedAt(),
+                    auction.endedAt(),
+                    auction.createdBy(),
+                    auction.updatedBy(),
+                    auction.deletedBy(),
+                    auction.createdAt(),
+                    OffsetDateTime.now(), // Update the updatedAt timestamp
+                    auction.deletedAt()
+            );
+
+            // Persist the updated auction
+            long updated = auctionRepository.updateAuctionStatus(updatedAuction);
+            if (updated == 1L) {
+                return Response.create("07", "00", "Sukses", updated);
+            } else {
+                return Response.create("07", "01", "Gagal reset password", null);
+            }
         });
     }
 

@@ -3,6 +3,7 @@ package jawa.sinaukoding.sk.controller;
 import jawa.sinaukoding.sk.model.Authentication;
 import jawa.sinaukoding.sk.model.Response;
 import jawa.sinaukoding.sk.model.request.SellerCreateAuctionReq;
+import jawa.sinaukoding.sk.model.request.UpdateStatusReq;
 import jawa.sinaukoding.sk.service.AuctionService;
 import jawa.sinaukoding.sk.util.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +37,9 @@ public class AuctionController  {
     }
 
     @PutMapping("/status")
-    public Response<Object> approveAuction() {
-        return Response.badRequest();
+    public Response<Object> approveAuction(@RequestBody UpdateStatusReq req) {
+        Authentication authentication = SecurityContextHolder.getAuthentication();
+        return auctionService.updateAuctionStatus(authentication, req);
     }
+
 }

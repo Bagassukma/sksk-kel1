@@ -1,4 +1,6 @@
 package jawa.sinaukoding.sk.model.request;
 
-public record UpdateStatusReq(String email, String newPassword) {
+import jawa.sinaukoding.sk.entity.Auction;
+
+public record UpdateStatusReq(Long id, Auction.Status status) {
 }
