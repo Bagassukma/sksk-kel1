@@ -87,8 +87,8 @@ public final class AuctionService extends AbstractService {
                 return Response.create("09","01", "Auction not found", null);
             }
 
-            final List<Auction> auctions = auctionRepository.findById(id);
-            final List<AuctionDto> dto = auctions.stream()
+//            final List<Auction> auctions = auctionRepository.findById(id);
+            final List<AuctionDto> dto = auction.stream()
                     .map(auctionList -> new AuctionDto(
                             auctionList.id(),
                             auctionList.code(),

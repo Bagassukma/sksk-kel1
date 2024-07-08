@@ -127,4 +127,10 @@ class AuctionServiceTest {
         Assertions.assertEquals("Gagal membuat lelang.", response.message());
         Assertions.assertNull(response.data());
     }
+
+    // List All Auction
+
+    // List Auction By ID
+
+    // Update Status By ID
 }
