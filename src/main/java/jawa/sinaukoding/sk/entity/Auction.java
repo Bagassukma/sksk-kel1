@@ -45,7 +45,6 @@ public record Auction(Long id, //
             ps.setTimestamp(12, Timestamp.valueOf(this.createdAt().toLocalDateTime()));
             return ps;
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
