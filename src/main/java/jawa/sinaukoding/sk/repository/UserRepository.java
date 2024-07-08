@@ -83,20 +83,6 @@ public class UserRepository {
         }
     }
 
-    public long updatePasswordByEmail2(final User user) {
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
-        try {
-            if (jdbcTemplate.update(con -> Objects.requireNonNull(user.update(con)), keyHolder) != 1) {
-                return 0L;
-            } else {
-                return Objects.requireNonNull(keyHolder.getKey()).longValue();
-            }
-        } catch (Exception e) {
-            log.error("{}", e.getMessage());
-            return 0L;
-        }
-    }
-
     public long updatePasswordByEmail(final String email, final String newPassword) {
         try {
             return jdbcTemplate.update(con -> {
