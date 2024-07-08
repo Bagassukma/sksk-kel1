@@ -209,11 +209,10 @@ class UserServiceTest {
         final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
 
         Response<Object> response = userService.listUsers(authentication, 1, 10);
+
         Assertions.assertEquals("0900", response.code());
         Assertions.assertEquals("Sukses", response.message());
     }
-
-
 
     @Test
     void deleteUser() {

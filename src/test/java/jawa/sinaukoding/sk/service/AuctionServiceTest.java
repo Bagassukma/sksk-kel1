@@ -1,5 +1,6 @@
 package jawa.sinaukoding.sk.service;
 
+import jawa.sinaukoding.sk.entity.Auction;
 import jawa.sinaukoding.sk.entity.User;
 import jawa.sinaukoding.sk.model.Authentication;
 import jawa.sinaukoding.sk.model.request.*;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @SpringBootTest
@@ -124,5 +126,41 @@ class AuctionServiceTest {
         Assertions.assertEquals("0501", response.code());
         Assertions.assertEquals("Gagal membuat lelang.", response.message());
         Assertions.assertNull(response.data());
+    }
+
+    @Test
+    void listAuction() {
+        final User user = userRepository.findById(1L).orElseThrow();
+        final List<Auction> seller = auctionRepository.findById(1L);
+
+        Mockito.when(auctionRepository.listAuction(1, 10)).thenReturn(seller);
+
+        final Authentication authentication = new Authentication(user.id(), user.role(), true);
+        final Response<Object> response = auctionService.listAuction(authentication, 1, 10);
+
+        Assertions.assertEquals("0900", response.code());
+        Assertions.assertEquals("Sukses", response.message());
+    }
+
+    @Test
+    void listAuctionBadRequest() {
+        final User user = userRepository.findById(1L).orElseThrow();
+        final Authentication authentication = new Authentication(user.id(), user.role(), true);
+
+        Response<Object> response1 =  auctionService.listAuction(authentication, 0, 10);
+        Assertions.assertEquals(Response.badRequest().code(), response1.code());
+        Assertions.assertEquals(Response.badRequest().message(), response1.message());
+
+        Response<Object> response2 =  auctionService.listAuction(authentication, -1, 10);
+        Assertions.assertEquals(Response.badRequest().code(), response2.code());
+        Assertions.assertEquals(Response.badRequest().message(), response2.message());
+
+        Response<Object> response3 =  auctionService.listAuction(authentication, 1, 0);
+        Assertions.assertEquals(Response.badRequest().code(), response3.code());
+        Assertions.assertEquals(Response.badRequest().message(), response3.message());
+
+        Response<Object> response4 =  auctionService.listAuction(authentication, 1, -1);
+        Assertions.assertEquals(Response.badRequest().code(), response4.code());
+        Assertions.assertEquals(Response.badRequest().message(), response4.message());
     }
 }

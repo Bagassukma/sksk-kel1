@@ -93,6 +93,4 @@ public class AuctionRepository {
             return 0L;
         }
     }
-
-
 }
