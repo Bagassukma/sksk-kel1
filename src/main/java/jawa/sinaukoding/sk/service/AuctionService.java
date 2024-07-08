@@ -105,21 +105,17 @@ public final class AuctionService extends AbstractService {
     public Response<Object> updateAuctionStatus(Authentication authentication, UpdateStatusReq req) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
             Auction.Status newStatus = req.status();
-            // Check if the new status is valid for update
             if (newStatus != Auction.Status.APPROVED && newStatus != Auction.Status.REJECTED) {
                 return Response.badRequest();
             }
 
-            // Fetch the auction by ID
             List<Auction> auctions = auctionRepository.findById(req.id());
             if (auctions.isEmpty()) {
                 return Response.create("07", "02", "Auction tidak ditemukan", null);
             }
 
-            // Update the status of the auction
             Auction auction = auctions.get(0);
 
-            // Create a new Auction object with updated status
             Auction updatedAuction = new Auction(
                     auction.id(),
                     auction.code(),
@@ -129,18 +125,17 @@ public final class AuctionService extends AbstractService {
                     auction.highestBid(),
                     auction.highestBidderId(),
                     auction.highestBidderName(),
-                    newStatus, // Update the status here
+                    newStatus,
                     auction.startedAt(),
                     auction.endedAt(),
                     auction.createdBy(),
                     auction.updatedBy(),
                     auction.deletedBy(),
                     auction.createdAt(),
-                    OffsetDateTime.now(), // Update the updatedAt timestamp
+                    OffsetDateTime.now(),
                     auction.deletedAt()
             );
 
-            // Persist the updated auction
             long updated = auctionRepository.updateAuctionStatus(updatedAuction);
             if (updated == 1L) {
                 return Response.create("07", "00", "Sukses", updated);
