@@ -48,6 +48,7 @@ public final class AuctionService extends AbstractService {
             );
 
             final Long saved = auctionRepository.saveAuction(newAuction);
+
             if (saved == 0L) {
                 return Response.create("05", "01", "Gagal membuat lelang.", null);
             } else {
@@ -115,7 +116,6 @@ public final class AuctionService extends AbstractService {
             }
 
             Auction auction = auctions.get(0);
-
             Auction updatedAuction = new Auction(
                     auction.id(),
                     auction.code(),
@@ -137,6 +137,7 @@ public final class AuctionService extends AbstractService {
             );
 
             long updated = auctionRepository.updateAuctionStatus(updatedAuction);
+
             if (updated == 1L) {
                 return Response.create("07", "00", "Sukses", updated);
             } else {
@@ -144,6 +145,4 @@ public final class AuctionService extends AbstractService {
             }
         });
     }
-
-
 }
