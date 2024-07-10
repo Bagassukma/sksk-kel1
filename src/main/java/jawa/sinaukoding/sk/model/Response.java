@@ -1,5 +1,7 @@
 package jawa.sinaukoding.sk.model;
 
+import java.util.Map;
+
 public record Response<T>(String code, String message, T data) {
 
     public static Response<Object> create(String serviceCode, String responseCode, String message, Object data) {

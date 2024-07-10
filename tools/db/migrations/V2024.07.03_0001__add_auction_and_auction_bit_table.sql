@@ -25,5 +25,6 @@ create table IF NOT EXISTS sk_auction_bit
     auction_id INTEGER NOT NULL,
     bid INTEGER NOT NULL,
     bidder INTEGER NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    FOREIGN KEY(auction_id) REFERENCES sk_auction(id)
 );

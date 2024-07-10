@@ -12,8 +12,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public final class AuctionService extends AbstractService {
@@ -28,7 +27,7 @@ public final class AuctionService extends AbstractService {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
-    public Response<Object> createAuction(final Authentication authentication, final SellerCreateAuctionReq req) {
+    public Response<Object> auctionCreate(final Authentication authentication, final SellerCreateAuctionReq req) {
         return precondition(authentication, User.Role.SELLER).orElseGet(() -> {
             if (req == null) {
                 return Response.badRequest();
@@ -57,6 +56,67 @@ public final class AuctionService extends AbstractService {
         });
     }
 
+    public Response<Object> rejectAuction(final Authentication authentication, Long id) {
+        return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
+            Optional<Auction> auctionOptional = auctionRepository.findById(id);
+            Auction auction = auctionOptional.get();
+            if (auction.status().equals(auction.status().WAITING_FOR_APPROVAL)){
+                if (isInvalid(auction)) {
+                    Auction updatedAuction = new Auction(
+                            auction.id(),
+                            auction.code(),
+                            auction.name(),
+                            auction.description(),
+                            auction.offer(),
+                            auction.highestBid(),
+                            auction.highestBidderId(),
+                            auction.highestBidderName(),
+                            Auction.Status.REJECTED,
+                            auction.startedAt(),
+                            auction.endedAt(),
+                            auction.createdBy(),
+                            auction.updatedBy(),
+                            auction.deletedBy(),
+                            auction.createdAt(),
+                            auction.updatedAt(),
+                            auction.deletedAt()
+                    );
+                    Long x = auctionRepository.RejectedAuction(id);
+                    return Response.create("01", "01", "Auction rejected successfully", x);
+                } else {
+                    return Response.create("01", "02", "cannot rejected", null);
+                }
+            }
+            return Response.badRequest();
+
+        });
+
+    }
+
+    private boolean isInvalid(Auction auction) {
+        return auction.id() == null ||
+                isNullOrEmpty(auction.code()) ||
+                isNullOrEmpty(auction.name()) ||
+                isNullOrEmpty(auction.description()) ||
+                auction.offer() == null ||
+                auction.highestBid() == null ||
+                auction.highestBidderId() == null ||
+                isNullOrEmpty(auction.highestBidderName()) ||
+                auction.status() == null ||
+                auction.startedAt() == null ||
+                auction.endedAt() == null ||
+                auction.createdBy() == null ||
+                auction.updatedBy() == null ||
+                auction.deletedBy() == null ||
+                auction.createdAt() == null ||
+                auction.updatedAt() == null ||
+                auction.deletedAt() == null;
+    }
+
+    private boolean isNullOrEmpty(String str) {
+        return str == null || str.trim().isEmpty();
+    }
+
     public Response<Object> listAuction(final Authentication authentication, final int page, final int size) {
         return precondition(authentication, User.Role.ADMIN, User.Role.SELLER, User.Role.BUYER).orElseGet(() -> {
             if (page <= 0 || size <= 0) {
@@ -79,43 +139,109 @@ public final class AuctionService extends AbstractService {
         });
     }
 
+    public Response<Object> ApproveAuction(final Authentication authentication, Long id) {
+        return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
+            Optional<Auction> auctionOptional = auctionRepository.findById(id);
+            Auction auction = auctionOptional.get();
+            if (auction.status().equals(auction.status().WAITING_FOR_APPROVAL)){
+                if (ifPresent(auction)) {
+                    Auction updatedAuction = new Auction(
+                            auction.id(),
+                            auction.code(),
+                            auction.name(),
+                            auction.description(),
+                            auction.offer(),
+                            auction.highestBid(),
+                            auction.highestBidderId(),
+                            auction.highestBidderName(),
+                            Auction.Status.APPROVED,
+                            auction.startedAt(),
+                            auction.endedAt(),
+                            auction.createdBy(),
+                            auction.updatedBy(),
+                            auction.deletedBy(),
+                            auction.createdAt(),
+                            auction.updatedAt(),
+                            auction.deletedAt()
+                    );
+                    Long x = auctionRepository.ApproveAuction(id);
+                    return Response.create("01", "01", "Auction Approved successfully", x);
+                } else {
+                    return Response.create("01", "02", "cannot Approved", null);
+                }
+            }
+            return Response.badRequest();
+
+        });
+
+    }
+
+    private boolean ifPresent(Auction auction) {
+        return auction.id() != null ||
+                isNotNullOrEmpty(auction.code()) ||
+                isNotNullOrEmpty(auction.name()) ||
+                isNotNullOrEmpty(auction.description()) ||
+                auction.offer() != null ||
+                auction.highestBid() != null ||
+                auction.highestBidderId() != null ||
+                isNotNullOrEmpty(auction.highestBidderName()) ||
+                auction.status() != null ||
+                auction.startedAt() != null ||
+                auction.endedAt() != null ||
+                auction.createdBy() != null ||
+                auction.updatedBy() != null ||
+                auction.deletedBy() != null ||
+                auction.createdAt() != null ||
+                auction.updatedAt() != null ||
+                auction.deletedAt() != null;
+    }
+
+    private boolean isNotNullOrEmpty(String str) {
+        return str != null && !str.trim().isEmpty();
+    }
+
     public Response<Object> getAuctionById(final Authentication authentication, final Long id) {
         return precondition(authentication, User.Role.ADMIN, User.Role.SELLER, User.Role.BUYER).orElseGet(() -> {
-            List<Auction> auction = auctionRepository.findById(id);
+            Optional<Auction> auctions = auctionRepository.findById(id);
 
-            if (auction == null) {
-                return Response.create("09","01", "Auction not found", null);
+            if (auctions.isEmpty()) {
+                return Response.create("09", "01", "Auction not found", null);
             }
 
-//            final List<Auction> auctions = auctionRepository.findById(id);
-            final List<AuctionDto> dto = auction.stream()
-                    .map(auctionList -> new AuctionDto(
-                            auctionList.id(),
-                            auctionList.code(),
-                            auctionList.name(),
-                            auctionList.description(),
-                            auctionList.offer(),
-                            auctionList.startedAt().toString(),
-                            auctionList.endedAt().toString(),
-                            auctionList.status().toString())).toList();
+            Auction auction = auctions.get();
+            AuctionDto auctionDto = new AuctionDto(
+                    auction.id(),
+                    auction.code(),
+                    auction.name(),
+                    auction.description(),
+                    auction.offer(),
+                    auction.startedAt().toString(),
+                    auction.endedAt().toString(),
+                    auction.status().toString()
+            );
 
-            return Response.create("09", "00", "Sukses", dto);
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("auction", auctionDto);
+
+            return Response.create("09", "00", "Sukses", responseData);
         });
     }
 
     public Response<Object> updateAuctionStatus(Authentication authentication, UpdateStatusReq req) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
             Auction.Status newStatus = req.status();
-            if (newStatus != Auction.Status.APPROVED && newStatus != Auction.Status.REJECTED) {
-                return Response.badRequest();
-            }
 
-            List<Auction> auctions = auctionRepository.findById(req.id());
+            Optional<Auction> auctions = auctionRepository.findById(req.id());
             if (auctions.isEmpty()) {
                 return Response.create("07", "02", "Auction tidak ditemukan", null);
             }
 
-            Auction auction = auctions.get(0);
+            Auction auction = auctions.get();
+
+            if (auction.status() == Auction.Status.APPROVED || auction.status() == Auction.Status.REJECTED) {
+                return Response.create("07", "03", "Status auction sudah DIUBAH dan tidak bisa diubah lagi", null);
+            }
+
             Auction updatedAuction = new Auction(
                     auction.id(),
                     auction.code(),
@@ -141,7 +267,7 @@ public final class AuctionService extends AbstractService {
             if (updated == 1L) {
                 return Response.create("07", "00", "Sukses", updated);
             } else {
-                return Response.create("07", "01", "Gagal reset password", null);
+                return Response.create("07", "01", "Gagal update Status", null);
             }
         });
     }

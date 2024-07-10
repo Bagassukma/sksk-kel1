@@ -18,10 +18,25 @@ public class AuctionController  {
         this.auctionService = auctionService;
     }
 
-    @PostMapping("/create")
+    // seller bisa createAuction
+    @PostMapping("create-auction")
     public Response<Object> createAuction(@RequestBody SellerCreateAuctionReq req) {
+        Authentication auth = SecurityContextHolder.getAuthentication();
+        return auctionService.auctionCreate(auth, req);
+    }
+
+    // admin, bisa approve
+    @PostMapping("approve-auction")
+    public Response<Object> approveAuction(@RequestParam (value = "id") Long id) {
         Authentication authentication = SecurityContextHolder.getAuthentication();
-        return auctionService.createAuction(authentication, req);
+        return auctionService.ApproveAuction(authentication, id);
+    }
+
+    // admin, bisa reject
+    @PostMapping("reject")
+    public Response<Object> rejectAuction( @RequestParam (value = "id") Long id) {
+        Authentication authentication = SecurityContextHolder.getAuthentication();
+        return auctionService.rejectAuction(authentication,id);
     }
 
     @GetMapping("/list")
@@ -41,5 +56,4 @@ public class AuctionController  {
         Authentication authentication = SecurityContextHolder.getAuthentication();
         return auctionService.updateAuctionStatus(authentication, req);
     }
-
 }

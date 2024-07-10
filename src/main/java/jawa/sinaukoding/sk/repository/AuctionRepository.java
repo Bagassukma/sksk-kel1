@@ -8,6 +8,8 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +37,46 @@ public class AuctionRepository {
             log.error("{}", e.getMessage());
             return 0L;
         }
+    }
+
+    public Long RejectedAuction(Long Id){
+        try {
+            if(jdbcTemplate.update(con -> {
+                final PreparedStatement ps = con.prepareStatement("UPDATE " + Auction.TABLE_NAME + " SET status = ?, updated_at=? WHERE id=?");
+                ps.setString(1, Auction.Status.REJECTED.toString());
+                ps.setObject(2, OffsetDateTime.now(ZoneOffset.UTC));
+                ps.setLong(3,Id);
+                return ps;
+            }) > 0){
+                return Id;
+            }else {
+                return 0L;
+            }
+        } catch (Exception e) {
+            System.err.println("error to updating status" + Id + ":" + e.getMessage());
+            return 0L;
+        }
+
+    }
+
+    public Long ApproveAuction(Long Id){
+        try {
+            if(jdbcTemplate.update(con -> {
+                final PreparedStatement ps = con.prepareStatement("UPDATE " + Auction.TABLE_NAME + " SET status = ?, updated_at=? WHERE id=?");
+                ps.setString(1, Auction.Status.APPROVED.toString());
+                ps.setObject(2,OffsetDateTime.now(ZoneOffset.UTC));
+                ps.setLong(3,Id);
+                return ps;
+            }) > 0){
+                return Id;
+            }else {
+                return 0L;
+            }
+        } catch (Exception e) {
+            System.err.println("error to updating status" + Id + ":" + e.getMessage());
+            return 0L;
+        }
+
     }
 
     public List<Auction> listAuction(int page, int size) {
@@ -93,4 +135,5 @@ public class AuctionRepository {
             return 0L;
         }
     }
+
 }
