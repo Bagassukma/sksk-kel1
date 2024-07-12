@@ -8,7 +8,7 @@ import java.util.Optional;
 
 abstract class AbstractService {
 
-    Optional<Response<Object>> precondition(final Authentication authentication, User.Role... role) {
+    static Optional<Response<Object>> precondition(final Authentication authentication, User.Role... role) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return Optional.of(Response.unauthenticated());
         }

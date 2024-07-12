@@ -9,6 +9,7 @@ import jawa.sinaukoding.sk.repository.AuctionRepository;
 import jawa.sinaukoding.sk.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
@@ -23,6 +24,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Nested
 @SpringBootTest
 class AuctionServiceTest {
 
@@ -53,6 +55,7 @@ class AuctionServiceTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    private Authentication authentication;
 
     @BeforeEach
     void findAdmin() {
@@ -129,10 +132,49 @@ class AuctionServiceTest {
     }
 
     // List All Auction
+    @Test
+    void listAllAuction () {
+        final User Seller = userRepository.findById(2L).orElseThrow();
+        final Authentication authentication = new Authentication(Seller.id(), Seller.role(), true);
 
+        Response<Object> response = auctionService.listAuction(authentication, 1, 10);
+        Assertions.assertEquals("0900", response.code());
+        Assertions.assertEquals("Sukses", response.message());
+    }
     // List Auction By ID
+    @Test
+    void listAuctionbyId () {
+        final  List<Auction> auctions = AuctionRepository.findById(1L);
 
+        Mockito.when(auctionRepository.findById(1L)).thenReturn(auctions);
+
+
+        Response<Object> response = auctionService.listAuction(authentication, 1, 10);
+        Assertions.assertEquals("0900", response.code());
+        Assertions.assertEquals("Sukses", response.message());
+
+
+    }
     // Update Status By ID
+    @Test
+    void updateStatusbyId (){
+        final UpdateStatusReq req = new UpdateStatusReq(1L, Auction.Status.APPROVED);
+        Auction auction = AuctionRepository.findById(1L).get(1);
+
+        final List<Auction> auctions = List.of(auction);
+
+        Mockito.when(auctionRepository.findById(1L)).thenReturn(auctions);
+        Mockito.when(auctionRepository.updateAuctionStatus(ArgumentMatchers.any(Auction.class))).thenReturn(1L);
+
+        final User seller = userRepository.findById(2L).orElseThrow();
+        final Authentication authentication = new Authentication(seller.id(), seller.role(), true);
+        final Response<Object> response = auctionService.rejectAuction(authentication, req.id());
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("0700", response.code());
+        Assertions.assertEquals("Sukses", response.message());
+        Assertions.assertEquals(1L, response.data());
+    }
 
     @Test
     void closeAuctionStatus() {
@@ -146,12 +188,12 @@ class AuctionServiceTest {
 
         final List<Auction> auctions = List.of(auction);
 
-        Mockito.when(auctionRepository.findById(1L)).thenReturn(auctions);
-        Mockito.when(auctionRepository.updateAuctionStatus(ArgumentMatchers.any(Auction.class))).thenReturn(1L);
+        Mockito.when(AuctionRepository.findById(1L)).thenReturn(auctions);
+        Mockito.when(AuctionRepository.updateAuctionStatus(ArgumentMatchers.any(Auction.class))).thenReturn(1L);
 
-        final User seller = userRepository.findById(2L).orElseThrow();
+        final User seller = UserRepository.findById(2L).orElseThrow();
         final Authentication authentication = new Authentication(seller.id(), seller.role(), true);
-        final Response<Object> response = auctionService.rejectAuction(authentication, req.id());
+        final Response<Object> response = AuctionService.rejectAuction(authentication, req.id());
 
         Assertions.assertNotNull(response);
         Assertions.assertEquals("0700", response.code());

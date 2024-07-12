@@ -24,7 +24,7 @@ public class UserRepository {
 
     private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
 
-    private final JdbcTemplate jdbcTemplate;
+    private static JdbcTemplate jdbcTemplate;
 
     public UserRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -97,7 +97,7 @@ public class UserRepository {
         }
     }
 
-    public Optional<User> findById(final Long id) {
+    public static Optional<User> findById(final Long id) {
         if (id == null || id < 0) {
             return Optional.empty();
         }

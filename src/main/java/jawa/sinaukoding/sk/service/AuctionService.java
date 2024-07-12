@@ -17,7 +17,7 @@ import java.util.*;
 @Service
 public final class AuctionService extends AbstractService {
 
-    private final AuctionRepository auctionRepository;
+    private static AuctionRepository auctionRepository;
 
     public AuctionService(final Environment env, final AuctionRepository auctionRepository) {
         this.auctionRepository = auctionRepository;
@@ -56,10 +56,10 @@ public final class AuctionService extends AbstractService {
         });
     }
 
-    public Response<Object> rejectAuction(final Authentication authentication, Long id) {
+    public static Response<Object> rejectAuction(final Authentication authentication, Long id) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
-            Optional<Auction> auctionOptional = auctionRepository.findById(id);
-            Auction auction = auctionOptional.get();
+            List<Auction> auctionOptional = auctionRepository.findById(id);
+            Auction auction = auctionOptional.get(0);
             if (auction.status().equals(auction.status().WAITING_FOR_APPROVAL)){
                 if (isInvalid(auction)) {
                     Auction updatedAuction = new Auction(
@@ -93,7 +93,7 @@ public final class AuctionService extends AbstractService {
 
     }
 
-    private boolean isInvalid(Auction auction) {
+    private static boolean isInvalid(Auction auction) {
         return auction.id() == null ||
                 isNullOrEmpty(auction.code()) ||
                 isNullOrEmpty(auction.name()) ||
@@ -113,7 +113,7 @@ public final class AuctionService extends AbstractService {
                 auction.deletedAt() == null;
     }
 
-    private boolean isNullOrEmpty(String str) {
+    private static boolean isNullOrEmpty(String str) {
         return str == null || str.trim().isEmpty();
     }
 
@@ -141,8 +141,8 @@ public final class AuctionService extends AbstractService {
 
     public Response<Object> ApproveAuction(final Authentication authentication, Long id) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
-            Optional<Auction> auctionOptional = auctionRepository.findById(id);
-            Auction auction = auctionOptional.get();
+            List<Auction> auctionOptional = auctionRepository.findById(id);
+            Auction auction = auctionOptional.get(0);
             if (auction.status().equals(auction.status().WAITING_FOR_APPROVAL)){
                 if (ifPresent(auction)) {
                     Auction updatedAuction = new Auction(
@@ -202,13 +202,13 @@ public final class AuctionService extends AbstractService {
 
     public Response<Object> getAuctionById(final Authentication authentication, final Long id) {
         return precondition(authentication, User.Role.ADMIN, User.Role.SELLER, User.Role.BUYER).orElseGet(() -> {
-            Optional<Auction> auctions = auctionRepository.findById(id);
+            List<Auction> auctions = auctionRepository.findById(id);
 
             if (auctions.isEmpty()) {
                 return Response.create("09", "01", "Auction not found", null);
             }
 
-            Auction auction = auctions.get();
+            Auction auction = auctions.get(1);
             AuctionDto auctionDto = new AuctionDto(
                     auction.id(),
                     auction.code(),
@@ -231,12 +231,12 @@ public final class AuctionService extends AbstractService {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
             Auction.Status newStatus = req.status();
 
-            Optional<Auction> auctions = auctionRepository.findById(req.id());
+            List<Auction> auctions = auctionRepository.findById(req.id());
             if (auctions.isEmpty()) {
                 return Response.create("07", "02", "Auction tidak ditemukan", null);
             }
 
-            Auction auction = auctions.get();
+            Auction auction = auctions.get(0);
 
             if (auction.status() == Auction.Status.APPROVED || auction.status() == Auction.Status.REJECTED) {
                 return Response.create("07", "03", "Status auction sudah DIUBAH dan tidak bisa diubah lagi", null);

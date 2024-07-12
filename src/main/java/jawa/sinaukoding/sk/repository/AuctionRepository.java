@@ -19,7 +19,7 @@ public class AuctionRepository {
 
     private static final Logger log = LoggerFactory.getLogger(AuctionRepository.class);
 
-    private final JdbcTemplate jdbcTemplate;
+    private static JdbcTemplate jdbcTemplate;
 
     public AuctionRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -103,7 +103,7 @@ public class AuctionRepository {
         ));
     }
 
-    public List<Auction> findById(Long id) {
+    public static List<Auction> findById(Long id) {
         String sql = "SELECT * FROM %s WHERE id = ?".formatted(Auction.TABLE_NAME);
         return jdbcTemplate.query(sql, new Object[]{id}, (rs, rowNum) -> new Auction(
                 rs.getLong("id"),
@@ -126,7 +126,7 @@ public class AuctionRepository {
         ));
     }
 
-    public long updateAuctionStatus(Auction auction) {
+    public static long updateAuctionStatus(Auction auction) {
         String sql = "UPDATE %s SET status = ? WHERE id = ?".formatted(Auction.TABLE_NAME);
         try {
             return jdbcTemplate.update(sql, auction.status().toString(), auction.id());

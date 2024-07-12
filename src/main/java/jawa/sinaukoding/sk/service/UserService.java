@@ -165,4 +165,21 @@ public final class UserService extends AbstractService {
         });
     }
 
+    public Response <Object> logout (final Authentication authentication) {
+        return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
+            if (authentication == null) {
+                return Response.badRequest();
+            }
+            final JwtUtils.Header header = new JwtUtils.Header(); //
+            final JwtUtils.Payload payload = new JwtUtils.Payload();
+            JwtUtils.hs256Tokenize(header, payload, jwtKey);
+            
+            if (result == 0L) {
+                return Response.create("07", "01", "Gagal reset password", null);
+            }
+            return Response.create("07", "00", "Sukses", result);
+        });
+
+    }
+
 }
