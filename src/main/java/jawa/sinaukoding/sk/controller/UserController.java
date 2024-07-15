@@ -2,10 +2,7 @@ package jawa.sinaukoding.sk.controller;
 
 import jawa.sinaukoding.sk.model.Authentication;
 import jawa.sinaukoding.sk.model.Response;
-import jawa.sinaukoding.sk.model.request.DeleteUserReq;
-import jawa.sinaukoding.sk.model.request.RegisterBuyerReq;
-import jawa.sinaukoding.sk.model.request.RegisterSellerReq;
-import jawa.sinaukoding.sk.model.request.ResetPasswordReq;
+import jawa.sinaukoding.sk.model.request.*;
 import jawa.sinaukoding.sk.service.UserService;
 import jawa.sinaukoding.sk.util.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -45,14 +42,19 @@ public class UserController {
     }
 
     @PostMapping("/update-profile")
-    public Response<Object> updateProfile() {
-        // TODO: update profile
-        return null;
+    public Response<Object> updateProfile(@RequestBody UpdateProfileReq req) {
+        Authentication auth = SecurityContextHolder.getAuthentication();
+        return userService.updateProfile(auth, req, auth.id());
     }
 
     @DeleteMapping("/delete-user")
     public Response<Object> deleteUser(@RequestBody DeleteUserReq req) {
         Authentication authentication = SecurityContextHolder.getAuthentication();
         return userService.deleteUser(authentication, req);
+    }
+    @GetMapping("/current")
+    public Response<Object> currentUser() {
+        Authentication authentication = SecurityContextHolder.getAuthentication();
+        return userService.currentUser(authentication);
     }
 }

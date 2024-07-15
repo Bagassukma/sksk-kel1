@@ -2,8 +2,9 @@ package jawa.sinaukoding.sk.service;
 
 import jawa.sinaukoding.sk.entity.User;
 import jawa.sinaukoding.sk.model.Authentication;
-import jawa.sinaukoding.sk.model.request.*;
 import jawa.sinaukoding.sk.model.Response;
+import jawa.sinaukoding.sk.model.request.*;
+import jawa.sinaukoding.sk.model.response.UserCurrentDto;
 import jawa.sinaukoding.sk.model.response.UserDto;
 import jawa.sinaukoding.sk.repository.UserRepository;
 import jawa.sinaukoding.sk.util.HexUtils;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+
 
 @Service
 public final class UserService extends AbstractService {
@@ -60,7 +62,7 @@ public final class UserService extends AbstractService {
                     null, //
                     null //
             );
-            final Long saved = userRepository.saveSeller(user);
+            final long saved = userRepository.saveSeller(user);
             if (0L == saved) {
                 return Response.create("05", "01", "Gagal mendaftarkan seller", null);
             }
@@ -87,7 +89,7 @@ public final class UserService extends AbstractService {
                     null, //
                     null //
             );
-            final Long saved = userRepository.saveBuyer(user);
+            final long saved = userRepository.saveBuyer(user);
             if (0L == saved) {
                 return Response.create("06", "01", "Gagal mendaftarkan buyer", null);
             }
@@ -119,7 +121,14 @@ public final class UserService extends AbstractService {
                 .add("iat", iat) //
                 .add("exp", exp); //
         final String token = JwtUtils.hs256Tokenize(header, payload, jwtKey);
-        return Response.create("08", "00", "Sukses", token);
+
+        TokenResponse tokenResponse = new TokenResponse(token, exp);
+
+        return Response.create("08", "00", "Sukses", tokenResponse);
+        }
+
+
+    public record TokenResponse(String token, long exp) {
     }
 
     public Response<Object> deleteUser(final Authentication authentication, final DeleteUserReq req) {
@@ -165,21 +174,50 @@ public final class UserService extends AbstractService {
         });
     }
 
-    public Response <Object> logout (final Authentication authentication) {
-        return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
-            if (authentication == null) {
-                return Response.badRequest();
-            }
-            final JwtUtils.Header header = new JwtUtils.Header(); //
-            final JwtUtils.Payload payload = new JwtUtils.Payload();
-            JwtUtils.hs256Tokenize(header, payload, jwtKey);
-            
-            if (result == 0L) {
-                return Response.create("07", "01", "Gagal reset password", null);
-            }
-            return Response.create("07", "00", "Sukses", result);
-        });
+    public Response<Object> currentUser(final Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Response.unauthorized();
+        }
 
+        final Optional<User> userOpt = UserRepository.findById(authentication.id());
+
+        if (userOpt.isEmpty()) {
+            return Response.badRequest();
+        }
+
+        final User user = userOpt.get();
+        final UserCurrentDto userDto = new UserCurrentDto(user.name(), user.email(), user.role().name());
+
+        return Response.create("11", "00", "Success", userDto);
     }
 
+    public Response<Object> updateProfile(final Authentication auth, final UpdateProfileReq req, long id) {
+        return precondition(auth, User.Role.ADMIN,User.Role.BUYER,User.Role.SELLER).orElseGet(() -> {
+            if (id == 0L){
+                return Response.badRequest();
+            }
+            final User user = new User(
+                    id, //
+                    req.name(), //
+                    req.email(), //
+                    null, //
+                    User.Role.BUYER, //
+                    null, //
+                    null, //
+                    null, //
+                    null, //
+                    OffsetDateTime.now(), //
+                    null //
+            );
+
+            final Long update = userRepository.updateProfile(user);
+
+            if(update == 0L){
+                return Response.create("06", "01", "gagal update profile", update);
+            }
+
+            return Response.create("06", "00",  "sukses update profile", update);
+        });
+    }
 }
+

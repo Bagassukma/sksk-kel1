@@ -1,5 +1,6 @@
 package jawa.sinaukoding.sk.repository;
 
+import jawa.sinaukoding.sk.entity.AuctionBid;
 import jawa.sinaukoding.sk.entity.Auction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,8 +9,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.PreparedStatement;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
@@ -22,7 +21,7 @@ public class AuctionRepository {
     private static JdbcTemplate jdbcTemplate;
 
     public AuctionRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+        AuctionRepository.jdbcTemplate = jdbcTemplate;
     }
 
     public long saveAuction(final Auction auction) {
@@ -39,49 +38,9 @@ public class AuctionRepository {
         }
     }
 
-    public Long RejectedAuction(Long Id){
-        try {
-            if(jdbcTemplate.update(con -> {
-                final PreparedStatement ps = con.prepareStatement("UPDATE " + Auction.TABLE_NAME + " SET status = ?, updated_at=? WHERE id=?");
-                ps.setString(1, Auction.Status.REJECTED.toString());
-                ps.setObject(2, OffsetDateTime.now(ZoneOffset.UTC));
-                ps.setLong(3,Id);
-                return ps;
-            }) > 0){
-                return Id;
-            }else {
-                return 0L;
-            }
-        } catch (Exception e) {
-            System.err.println("error to updating status" + Id + ":" + e.getMessage());
-            return 0L;
-        }
-
-    }
-
-    public Long ApproveAuction(Long Id){
-        try {
-            if(jdbcTemplate.update(con -> {
-                final PreparedStatement ps = con.prepareStatement("UPDATE " + Auction.TABLE_NAME + " SET status = ?, updated_at=? WHERE id=?");
-                ps.setString(1, Auction.Status.APPROVED.toString());
-                ps.setObject(2,OffsetDateTime.now(ZoneOffset.UTC));
-                ps.setLong(3,Id);
-                return ps;
-            }) > 0){
-                return Id;
-            }else {
-                return 0L;
-            }
-        } catch (Exception e) {
-            System.err.println("error to updating status" + Id + ":" + e.getMessage());
-            return 0L;
-        }
-
-    }
-
-    public List<Auction> listAuction(int page, int size) {
+    public List<Auction> listAuction(int page, int size, String auction) {
         final int offset = (page - 1) * size;
-        final String sql = "SELECT * FROM %s LIMIT ? OFFSET ?".formatted(Auction.TABLE_NAME);
+        String sql = "SELECT * FROM %s LIMIT ? OFFSET ?".formatted(Auction.TABLE_NAME);
         return jdbcTemplate.query(sql, new Object[]{size, offset}, (rs, rowNum) -> new Auction(
                 rs.getLong("id"),
                 rs.getString("code"),
@@ -134,6 +93,41 @@ public class AuctionRepository {
             log.error("Failed to update auction status: {}", e.getMessage());
             return 0L;
         }
+    }
+
+    public long closeAuctionStatus(Auction auction) {
+        String sql = "UPDATE %s SET status = ? WHERE id = ?".formatted(Auction.TABLE_NAME);
+        try {
+            return jdbcTemplate.update(sql, auction.status().toString(), auction.id());
+        } catch (Exception e) {
+            log.error("Failed to close auction status: {}", e.getMessage());
+            return 0L;
+        }
+    }
+
+    public long saveBidding(final AuctionBid bidding) {
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+        try {
+            if (jdbcTemplate.update(con -> Objects.requireNonNull(bidding.insert(con)), keyHolder) != 1) {
+                return 0L;
+            } else {
+                return Objects.requireNonNull(keyHolder.getKey()).longValue();
+            }
+        } catch (Exception e) {
+            log.error("{}", e.getMessage());
+            return 0L;
+        }
+    }
+
+    public List<AuctionBid> findBiddingByAuctionId(Long auctionId) {
+        String sql = "SELECT * FROM %s WHERE auction_id = ?".formatted(AuctionBid.TABLE_NAME);
+        return jdbcTemplate.query(sql, new Object[]{auctionId}, (rs, rowNum) -> new AuctionBid(
+                rs.getLong("id"),
+                rs.getLong("auction_id"),
+                rs.getInt("bid"),
+                rs.getLong("bidder"),
+                rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC)
+        ));
     }
 
 }

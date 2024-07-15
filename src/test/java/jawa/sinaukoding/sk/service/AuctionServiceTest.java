@@ -134,47 +134,222 @@ class AuctionServiceTest {
     // List All Auction
     @Test
     void listAllAuction () {
-        final User Seller = userRepository.findById(2L).orElseThrow();
-        final Authentication authentication = new Authentication(Seller.id(), Seller.role(), true);
+            final User admin = userRepository.findById(1L).orElseThrow();
+            final OffsetDateTime startedAt1 = OffsetDateTime.parse("2024-07-15T18:00:00Z");
+            final OffsetDateTime endedAt1 = OffsetDateTime.parse("2024-07-15T22:00:00Z");
+            final OffsetDateTime startedAt2 = OffsetDateTime.parse("2024-07-16T18:00:00Z");
+            final OffsetDateTime endedAt2 = OffsetDateTime.parse("2024-07-16T22:00:00Z");
 
-        Response<Object> response = auctionService.listAuction(authentication, 1, 10);
+            final Auction auction1 = new Auction(
+                    1L,
+                    "A1",
+                    "Auction1",
+                    "Description1",
+                    100,
+                    150,
+                    2L,
+                    "Bidder1",
+                    Auction.Status.APPROVED,
+                    startedAt1,
+                    endedAt1,
+                    admin.id(),
+                    null,
+                    null,
+                    startedAt1,
+                    null,
+                    null
+            );
+
+            final Auction auction2 = new Auction(
+                    2L,
+                    "A2",
+                    "Auction2",
+                    "Description2",
+                    200,
+                    250,
+                    3L,
+                    "Bidder2",
+                    Auction.Status.APPROVED,
+                    startedAt2,
+                    endedAt2,
+                    admin.id(),
+                    null,
+                    null,
+                    startedAt2,
+                    null,
+                    null
+            );
+
+        Mockito.when(auctionRepository.listAuction(1, 10, "Auction")).thenReturn(List.of(auction1, auction2));
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = auctionService.listAuction(authentication, 1, 10, "Auction");
+
+        System.out.println(response);
+
         Assertions.assertEquals("0900", response.code());
         Assertions.assertEquals("Sukses", response.message());
+        Assertions.assertNotNull(response.data());
     }
-    // List Auction By ID
+
+        // List Auction By ID
     @Test
-    void listAuctionbyId () {
-        final  List<Auction> auctions = AuctionRepository.findById(1L);
+    void getAuctionById() {
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final OffsetDateTime startedAt = OffsetDateTime.parse("2024-07-15T18:00:00Z");
+        final OffsetDateTime endedAt = OffsetDateTime.parse("2024-07-15T22:00:00Z");
 
-        Mockito.when(auctionRepository.findById(1L)).thenReturn(auctions);
+        final Auction auction = new Auction(
+                1L,
+                "A1",
+                "Auction1",
+                "Description1",
+                100,
+                150,
+                2L,
+                "Bidder1",
+                Auction.Status.APPROVED,
+                startedAt,
+                endedAt,
+                admin.id(),
+                null,
+                null,
+                startedAt,
+                null,
+                null
+        );
 
+        Mockito.when(auctionRepository.findById(1L)).thenReturn(List.of(auction));
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final Response<Object> response = auctionService.getAuctionById(authentication, 1L);
 
-        Response<Object> response = auctionService.listAuction(authentication, 1, 10);
+        System.out.println(response);
+
         Assertions.assertEquals("0900", response.code());
         Assertions.assertEquals("Sukses", response.message());
-
-
+        Assertions.assertNotNull(response.data());
     }
     // Update Status By ID
     @Test
-    void updateStatusbyId (){
+    void updateAuctionStatusApproved() {
+        final User admin = UserRepository.findById(1L).orElseThrow();
+        final OffsetDateTime startedAt = OffsetDateTime.parse("2024-07-15T18:00:00Z");
+        final OffsetDateTime endedAt = OffsetDateTime.parse("2024-07-15T22:00:00Z");
+
+        final Auction auction = new Auction(
+                1L,
+                "A1",
+                "Auction1",
+                "Description1",
+                100,
+                150,
+                2L,
+                "Bidder1",
+                Auction.Status.WAITING_FOR_APPROVAL,
+                startedAt,
+                endedAt,
+                admin.id(),
+                null,
+                null,
+                startedAt,
+                null,
+                null
+        );
+
+        Mockito.when(auctionRepository.findById(1L)).thenReturn(List.of(auction));
+        Mockito.when(auctionRepository.updateAuctionStatus(Mockito.any(Auction.class))).thenReturn(1L);
+
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
         final UpdateStatusReq req = new UpdateStatusReq(1L, Auction.Status.APPROVED);
-        Auction auction = AuctionRepository.findById(1L).get(1);
+        final Response<Object> response = auctionService.updateAuctionStatus(authentication, req);
 
-        final List<Auction> auctions = List.of(auction);
+        System.out.println(response);
 
-        Mockito.when(auctionRepository.findById(1L)).thenReturn(auctions);
-        Mockito.when(auctionRepository.updateAuctionStatus(ArgumentMatchers.any(Auction.class))).thenReturn(1L);
-
-        final User seller = userRepository.findById(2L).orElseThrow();
-        final Authentication authentication = new Authentication(seller.id(), seller.role(), true);
-        final Response<Object> response = auctionService.rejectAuction(authentication, req.id());
-
-        Assertions.assertNotNull(response);
         Assertions.assertEquals("0700", response.code());
         Assertions.assertEquals("Sukses", response.message());
+        Assertions.assertNotNull(response.data());
         Assertions.assertEquals(1L, response.data());
     }
+
+    @Test
+    void updateAuctionStatusRejected() {
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final OffsetDateTime startedAt = OffsetDateTime.parse("2024-07-15T18:00:00Z");
+        final OffsetDateTime endedAt = OffsetDateTime.parse("2024-07-15T22:00:00Z");
+
+        final Auction auction = new Auction(
+                1L,
+                "A1",
+                "Auction1",
+                "Description1",
+                100,
+                150,
+                2L,
+                "Bidder1",
+                Auction.Status.WAITING_FOR_APPROVAL,
+                startedAt,
+                endedAt,
+                admin.id(),
+                null,
+                null,
+                startedAt,
+                null,
+                null
+        );
+
+        Mockito.when(auctionRepository.findById(1L)).thenReturn(List.of(auction));
+        Mockito.when(auctionRepository.updateAuctionStatus(Mockito.any(Auction.class))).thenReturn(1L);
+
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final UpdateStatusReq req = new UpdateStatusReq(1L, Auction.Status.REJECTED);
+        final Response<Object> response = auctionService.updateAuctionStatus(authentication, req);
+
+        System.out.println(response);
+
+        Assertions.assertEquals("0700", response.code());
+        Assertions.assertEquals("Sukses", response.message());
+        Assertions.assertNotNull(response.data());
+        Assertions.assertEquals(1L, response.data());
+    }
+
+    @Test
+    void updateAuctionStatusAlreadyUpdated() {
+        final User admin = userRepository.findById(1L).orElseThrow();
+        final OffsetDateTime startedAt = OffsetDateTime.parse("2024-07-15T18:00:00Z");
+        final OffsetDateTime endedAt = OffsetDateTime.parse("2024-07-15T22:00:00Z");
+
+        final Auction auction = new Auction(
+                1L,
+                "A1",
+                "Auction1",
+                "Description1",
+                100,
+                150,
+                2L,
+                "Bidder1",
+                Auction.Status.APPROVED,
+                startedAt,
+                endedAt,
+                admin.id(),
+                null,
+                null,
+                startedAt,
+                null,
+                null
+        );
+
+        Mockito.when(auctionRepository.findById(1L)).thenReturn(List.of(auction));
+
+        final Authentication authentication = new Authentication(admin.id(), admin.role(), true);
+        final UpdateStatusReq req = new UpdateStatusReq(1L, Auction.Status.REJECTED);
+        final Response<Object> response = auctionService.updateAuctionStatus(authentication, req);
+
+        System.out.println(response);
+
+        Assertions.assertEquals("0703", response.code());
+        Assertions.assertEquals("Status auction sudah DIUBAH dan tidak bisa diubah lagi", response.message());
+        Assertions.assertNull(response.data());
+    }
+
 
     @Test
     void closeAuctionStatus() {
@@ -193,7 +368,7 @@ class AuctionServiceTest {
 
         final User seller = UserRepository.findById(2L).orElseThrow();
         final Authentication authentication = new Authentication(seller.id(), seller.role(), true);
-        final Response<Object> response = AuctionService.rejectAuction(authentication, req.id());
+        final Response<Object> response = AuctionService.closeAuctionStatus(authentication, req);
 
         Assertions.assertNotNull(response);
         Assertions.assertEquals("0700", response.code());
