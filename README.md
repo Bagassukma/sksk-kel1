@@ -29,4 +29,4 @@ Java JDK 21 -> [JavaJDK](https://www.oracle.com/id/java/technologies/downloads/#
 Postman Docs -> [Postman](https://documenter.getpostman.com/view/36769762/2sA3kPq4gs)
 
 ### Dokumentasi
-Markdown Doc -> [Docs](https://github.com/ArbiNMaki/sksk-kelompok1/tree/main/docs/Lelang)
+Markdown Doc -> [Docs](https://github.com/Bagassukma/sksk-kel1/tree/Auctionsksk/docs/Lelang)
